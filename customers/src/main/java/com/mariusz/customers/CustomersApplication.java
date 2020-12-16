@@ -6,10 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -47,12 +44,17 @@ class CustomerController {
         return repository.findAll();
     }
 
+    @PostMapping("")
+    public Mono<Customer> addCustomer(@RequestBody Customer customer){
+        return repository.save(customer);
+    }
+
     @GetMapping("/{customersId}/orders")
     public Mono<CustomerOrders> getCustomerOrders(@PathVariable Integer customersId) {
         return repository.findById(customersId)
                 .zipWhen(customer ->  this.webClient.get().uri("http://localhost:8082/orders/" + customersId)
                         .retrieve().bodyToFlux(Order.class)
-                        .retryWhen(Retry.backoff(10, Duration.ofSeconds(2)))
+                        .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(5)))
                         .onErrorResume(e -> Flux.empty())
                         .collect(Collectors.toList()))
                 .map(t -> new CustomerOrders(t.getT1(), t.getT2()));
