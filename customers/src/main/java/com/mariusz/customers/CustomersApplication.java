@@ -40,21 +40,22 @@ public class CustomersApplication {
 class CustomerController {
 
     private final WebClient webClient;
+    private final CustomerRepository repository;
 
-    @GetMapping("/")
+    @GetMapping("")
     public Flux<Customer> getCustomers() {
-        return Flux.just(new Customer(1, "John"), new Customer(2, "Mary"));
+        return repository.findAll();
     }
 
     @GetMapping("/{customersId}/orders")
     public Mono<CustomerOrders> getCustomerOrders(@PathVariable Integer customersId) {
-        return this.webClient.get().uri("http://localhost:8082/orders/" + customersId)
-                .retrieve().bodyToFlux(Order.class)
-                .retryWhen(Retry.backoff(10, Duration.ofSeconds(2)))
-                .onErrorResume(e -> Flux.empty())
-                .collect(Collectors.toList())
-                .zipWith(Mono.just(new Customer(customersId, "John")))
-                .map(t -> new CustomerOrders(t.getT2(), t.getT1()));
+        return repository.findById(customersId)
+                .zipWhen(customer ->  this.webClient.get().uri("http://localhost:8082/orders/" + customersId)
+                        .retrieve().bodyToFlux(Order.class)
+                        .retryWhen(Retry.backoff(10, Duration.ofSeconds(2)))
+                        .onErrorResume(e -> Flux.empty())
+                        .collect(Collectors.toList()))
+                .map(t -> new CustomerOrders(t.getT1(), t.getT2()));
     }
 
 
