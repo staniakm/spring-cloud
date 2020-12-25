@@ -3,6 +3,7 @@ package com.mariusz.customers;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -34,6 +35,7 @@ public class CustomersApplication {
 @RestController
 @RequestMapping("/customers")
 @RequiredArgsConstructor
+@Slf4j
 class CustomerController {
 
     private final WebClient webClient;
@@ -51,6 +53,7 @@ class CustomerController {
 
     @GetMapping("/{customersId}/orders")
     public Mono<CustomerOrders> getCustomerOrders(@PathVariable Integer customersId) {
+        log.info("Fetching customer orders for {}", customersId);
         return repository.findById(customersId)
                 .zipWhen(customer ->  this.webClient.get().uri("http://localhost:8082/orders/" + customersId)
                         .retrieve().bodyToFlux(Order.class)
