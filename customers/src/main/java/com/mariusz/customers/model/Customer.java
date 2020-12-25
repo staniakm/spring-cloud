@@ -1,4 +1,4 @@
-package com.mariusz.customers;
+package com.mariusz.customers.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

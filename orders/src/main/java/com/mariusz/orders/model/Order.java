@@ -1,4 +1,4 @@
-package com.mariusz.orders;
+package com.mariusz.orders.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
